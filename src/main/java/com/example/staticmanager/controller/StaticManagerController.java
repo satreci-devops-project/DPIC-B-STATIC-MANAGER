@@ -4,6 +4,7 @@ package com.example.staticmanager.controller;
 import com.example.staticmanager.service.StaticManagerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,10 +19,15 @@ public class StaticManagerController {
     @PostMapping(value = "/")
     public String test(@RequestBody String test){
         log.info(test);
-        sms.getEmployees();
         return "OK";
     }
 
+    @PostMapping(value = "/sonarqube")
+    public String test2(@RequestBody String message) {
+//        log.info(message);
+        sms.getSonarqubeInfo();
+        return "OK";
+    }
 
 
 }
