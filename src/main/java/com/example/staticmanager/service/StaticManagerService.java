@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Base64;
 
 
 @Slf4j
@@ -79,11 +80,16 @@ public class StaticManagerService {
         String result = new String("No response");
         OkHttpClient client = new OkHttpClient();
         try {
+            String tokenBase = System.getenv("SONARQUBE_ID") + ":" + System.getenv("SONARQUBE_PASSWORD");
+            String basicAuth = "Basic " + new String(Base64.getEncoder().encode(tokenBase.getBytes()));
+
+
             String authorization = "Bearer " + System.getenv("SONARQUBE_TOKEN");
+            log.info(basicAuth);
             Request request = new Request.Builder()
-                    .addHeader("Authorization", authorization)
+                    .addHeader("Authorization", basicAuth)
                     .addHeader("Accept", "application/json")
-                    .url("https://sonarqube.com/api/measures/component?component=et-clinic&metricKey=ncloc")
+                    .url("http://localhost:9000/api/measures/component?component=pet-clinic&metricKeys=ncloc")
                     .build();
             Response response = client.newCall(request).execute();
             log.info(response.toString());
