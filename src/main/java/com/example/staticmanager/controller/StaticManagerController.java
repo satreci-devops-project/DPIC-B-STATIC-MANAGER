@@ -17,17 +17,11 @@ public class StaticManagerController {
     StaticManagerService sms;
 
     @PostMapping(value = "/")
-    public String test(@RequestBody String test){
-        log.info(test);
+    public String sonarqubeWebhook(@RequestBody String test){
+//        sms.getStaticAnalysisResultInfo();
+        sms.staticManagerService();
+
         return "OK";
     }
-
-    @PostMapping(value = "/sonarqube")
-    public String test2(@RequestBody String message) {
-//        log.info(message);
-        sms.getSonarqubeInfo();
-        return "OK";
-    }
-
 
 }
