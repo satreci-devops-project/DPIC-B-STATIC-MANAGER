@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 @Getter
 @Table(name = "project_tb")
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Project {
 
     @Id
@@ -35,14 +37,4 @@ public class Project {
     LocalDateTime createdAt;
 
 
-    @Builder
-    public Project(String projectKey, String name, String qualifier, String visibility, LocalDateTime lastAnalysisDate, LocalDateTime updatedAt, LocalDateTime createdAt) {
-        this.projectKey = projectKey;
-        this.name = name;
-        this.qualifier = qualifier;
-        this.visibility = visibility;
-        this.lastAnalysisDate = lastAnalysisDate;
-        this.updatedAt = updatedAt;
-        this.createdAt = createdAt;
-    }
 }

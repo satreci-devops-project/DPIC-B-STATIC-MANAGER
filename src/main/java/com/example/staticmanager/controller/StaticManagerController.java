@@ -18,10 +18,8 @@ public class StaticManagerController {
 
     @PostMapping(value = "/")
     public String sonarqubeWebhook(@RequestBody String test){
-//        sms.getStaticAnalysisResultInfo();
-        sms.staticManagerService();
 
-        return "OK";
+        return sms.staticManagerService();
     }
 
 }

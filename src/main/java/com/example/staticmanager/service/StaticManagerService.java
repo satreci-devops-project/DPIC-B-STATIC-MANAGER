@@ -41,15 +41,38 @@ import java.util.Map;
 @Service
 public class StaticManagerService {
 
-    public String getStaticAnalysisResultInfo() {
+    @Autowired
+    ProjectRepository projectRepository;
+    @Autowired
+    StaticAnalysisResultRepository staticAnalysisResultRepository;
+
+    public String staticManagerService(){
+
+        try{
+            Project project = jsonToProjectObject(getProjectInfo());
+            projectRepository.save(project);
+            StaticAnalysisResult staticAnalysisResult = jsonToStaticAnalysisResult(getStaticAnalysisResultInfo(), project);
+            staticAnalysisResultRepository.save(staticAnalysisResult);
+        }
+        catch(Exception e){
+            log.info("Error : {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+        finally {
+            return "200 OK";
+        }
+    }
+
+
+
+
+    private String getStaticAnalysisResultInfo() {
         String result = new String("No response");
         OkHttpClient client = new OkHttpClient();
         try {
             String tokenBase = System.getenv("SONARQUBE_ID") + ":" + System.getenv("SONARQUBE_PASSWORD");
             String basicAuth = "Basic " + new String(Base64.getEncoder().encode(tokenBase.getBytes()));
 
-
-//            String authorization = "Bearer " + System.getenv("SONARQUBE_TOKEN");
             log.info(basicAuth);
             Request request = new Request.Builder()
                     .addHeader("Authorization", basicAuth)
@@ -58,7 +81,7 @@ public class StaticManagerService {
                     .build();
             Response response = client.newCall(request).execute();
             log.info(response.toString());
-//            log.info(System.getenv("SONARQUBE_TOKEN"));
+
             result = response.body().string();
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,19 +91,7 @@ public class StaticManagerService {
         return result;
     }
 
-
-
-
-
-
-    //-------------------------------------------------------------------------------------------------
-    //----------------------------------Project 테이블 코드 ---------------------------------------------
-
-
-    @Autowired
-    ProjectRepository pr;
-
-    public String getProjectInfo() {
+    private String getProjectInfo() {
         String result = new String("No response");
         OkHttpClient client = new OkHttpClient();
 
@@ -105,14 +116,7 @@ public class StaticManagerService {
         }
     }
 
-
-    //-------------------------------------------------------------------------------------------------
-    //----------------------------------static analysis result 테이블 코드 ---------------------------------------------
-    
-    @Autowired
-    StaticAnalysisResultRepository staticAnalysisResultRepository;
-    
-    public StaticAnalysisResult jsonToStaticAnalysisResult(String jsonResponse, Project project) throws ParseException {
+    private StaticAnalysisResult jsonToStaticAnalysisResult(String jsonResponse, Project project) throws ParseException {
         JSONParser parser = new JSONParser();
         JSONObject component = (JSONObject) ((JSONObject) parser.parse(jsonResponse)).get("component");
         log.info(component.toString());
@@ -139,7 +143,7 @@ public class StaticManagerService {
                 .build();
     }
 
-    public Project jsonToProjectObject(String jsonResponse) throws ParseException {
+    private Project jsonToProjectObject(String jsonResponse) throws ParseException {
 
         JSONParser parse = new JSONParser();
         String componentsStr = ((JSONObject)parse.parse(jsonResponse)).get("components").toString();
@@ -150,39 +154,17 @@ public class StaticManagerService {
         String tempLastAnalysisDate = componentsObj.get("lastAnalysisDate").toString();
         tempLastAnalysisDate = tempLastAnalysisDate.substring(0, tempLastAnalysisDate.length()-5);
 
-        System.out.println(tempLastAnalysisDate);
 
-
-        return new Project(
-                componentsObj.get("key").toString(),
-                componentsObj.get("name").toString(),
-                componentsObj.get("qualifier").toString(),
-                componentsObj.get("visibility").toString(),
-                LocalDateTime.parse(tempLastAnalysisDate, formatter),
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
+        return Project.builder()
+                .projectKey(componentsObj.get("key").toString())
+                .name(componentsObj.get("name").toString())
+                .qualifier(componentsObj.get("qualifier").toString())
+                .visibility(componentsObj.get("visibility").toString())
+                .lastAnalysisDate(LocalDateTime.parse(tempLastAnalysisDate, formatter))
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
     }
-
-
-    public String staticManagerService(){
-
-        try{
-            Project project = jsonToProjectObject(getProjectInfo());
-            pr.save(project);
-            StaticAnalysisResult staticAnalysisResult = jsonToStaticAnalysisResult(getStaticAnalysisResultInfo(), project);
-            staticAnalysisResultRepository.save(staticAnalysisResult);
-        }
-        catch(Exception e){
-            log.info("Error : {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
-        finally {
-            return "200 OK";
-        }
-    }
-
-
 
 
 }
