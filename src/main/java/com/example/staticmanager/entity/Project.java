@@ -1,6 +1,7 @@
 package com.example.staticmanager.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,13 +12,14 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Table(name = "project_tb")
+@NoArgsConstructor
 public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "project_id", unique = true)
     Integer projectId;
-    @Column(name = "project_key", unique = true, nullable = false)
+    @Column(name = "project_key", nullable = false)
     String projectKey;
     @Column(name = "name", nullable = false)
     String name;
@@ -33,6 +35,7 @@ public class Project {
     LocalDateTime createdAt;
 
 
+    @Builder
     public Project(String projectKey, String name, String qualifier, String visibility, LocalDateTime lastAnalysisDate, LocalDateTime updatedAt, LocalDateTime createdAt) {
         this.projectKey = projectKey;
         this.name = name;
