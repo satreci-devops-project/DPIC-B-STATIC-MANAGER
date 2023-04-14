@@ -1,6 +1,7 @@
 package com.example.staticmanager.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Getter
 @Table(name = "static_analysis_result_tb")
 public class StaticAnalysisResult {
@@ -20,7 +22,7 @@ public class StaticAnalysisResult {
     @Column(name = "static_analysis_result_id", unique = true, nullable = false)
     Integer staticAnalysisResultId;
     @ManyToOne
-    @JoinColumn(name="project_key")
+    @JoinColumn(name="project_id")
     Project projectKey;
     @Column(name = "loc", nullable = false)
     Integer loc;
@@ -28,8 +30,6 @@ public class StaticAnalysisResult {
     Integer bugs;
     @Column(name = "code_smells", nullable = false)
     Integer codeSmells;
-    @Column(name = "vulnerabilities", nullable = false)
-    Integer vulnerabilities;
     @Column(name = "complexity", nullable = false)
     Integer complexity;
     @Column(name = "created_at", nullable = false)
