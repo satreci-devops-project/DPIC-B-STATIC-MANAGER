@@ -2,12 +2,16 @@ package com.example.staticmanager.service;
 
 
 import com.example.staticmanager.entity.Project;
+import com.example.staticmanager.entity.StaticAnalysisResult;
 import com.example.staticmanager.repository.ProjectRepository;
+import com.example.staticmanager.repository.StaticAnalysisResultRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.asm.Advice;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -29,6 +33,8 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Slf4j
@@ -48,13 +54,14 @@ public class StaticManagerService {
             Request request = new Request.Builder()
                     .addHeader("Authorization", basicAuth)
                     .addHeader("Accept", "application/json")
-                    .url("http://localhost:9000/api/measures/component?component=pet-clinic&metricKeys=ncloc")
+                    .url("http://localhost:9000/api/measures/component?component=pet-clinic&metricKeys=ncloc,bugs,complexity,code_smells")
                     .build();
             Response response = client.newCall(request).execute();
             log.info(response.toString());
 //            log.info(System.getenv("SONARQUBE_TOKEN"));
             result = response.body().string();
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         } ;
         log.info("result : {}", result);
@@ -98,6 +105,40 @@ public class StaticManagerService {
         }
     }
 
+
+    //-------------------------------------------------------------------------------------------------
+    //----------------------------------static analysis result 테이블 코드 ---------------------------------------------
+    
+    @Autowired
+    StaticAnalysisResultRepository staticAnalysisResultRepository;
+    
+    public StaticAnalysisResult jsonToStaticAnalysisResult(String jsonResponse, Project project) throws ParseException {
+        JSONParser parser = new JSONParser();
+        JSONObject component = (JSONObject) ((JSONObject) parser.parse(jsonResponse)).get("component");
+        log.info(component.toString());
+        JSONArray measures = (JSONArray) component.get("measures");
+        log.info(measures.toString());
+
+        Map<String, Integer> paramMap = new HashMap<>();
+        for(Object obj : measures) {
+            JSONObject jsonObject = (JSONObject) obj;
+            String metric = jsonObject.get("metric").toString();
+            Integer value = Integer.parseInt(jsonObject.get("value").toString());
+            log.info("{} {}", metric, value);
+            paramMap.put(metric, value);
+        }
+
+        return StaticAnalysisResult.builder()
+                .bugs(paramMap.get("bugs"))
+                .codeSmells(paramMap.get("code_smells"))
+                .complexity(paramMap.get("complexity"))
+                .loc(paramMap.get("ncloc"))
+                .projectKey(project)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
     public Project jsonToProjectObject(String jsonResponse) throws ParseException {
 
         JSONParser parse = new JSONParser();
@@ -127,7 +168,10 @@ public class StaticManagerService {
     public String staticManagerService(){
 
         try{
-            pr.save(jsonToProjectObject(getProjectInfo()));
+            Project project = jsonToProjectObject(getProjectInfo());
+            pr.save(project);
+            StaticAnalysisResult staticAnalysisResult = jsonToStaticAnalysisResult(getStaticAnalysisResultInfo(), project);
+            staticAnalysisResultRepository.save(staticAnalysisResult);
         }
         catch(Exception e){
             log.info("Error : {}", e.getMessage());
